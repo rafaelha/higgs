@@ -17,9 +17,9 @@ params_ = [
         "tau": [2*np.pi],
         "w":  [1],
         "A0_pr": [0.025, 0.05, 0.01],
-        "tau_pr": np.linspace(0, 10*2*np.pi, 20),
-        "w_pr": [0],
-        "t_delay": [0]
+        "tau_pr": [2*np.pi],
+        "w_pr": [1],
+        "t_delay": np.linspace(0, 10*2*np.pi, 20),
     }
 ]
 
