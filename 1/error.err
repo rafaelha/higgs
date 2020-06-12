@@ -1,0 +1,16 @@
+slurmstepd: error: *** JOB 278783 ON node16 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278782 ON node16 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278792 ON node18 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278794 ON node18 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278793 ON node18 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278788 ON node02 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278786 ON node02 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278787 ON node02 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278789 ON node04 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278790 ON node04 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278791 ON node04 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278785 ON node22 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278784 ON node22 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278797 ON node20 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278795 ON node20 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278796 ON node20 CANCELLED AT 2020-06-11T23:09:22 ***

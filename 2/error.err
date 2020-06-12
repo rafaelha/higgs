@@ -1,0 +1,7 @@
+slurmstepd: error: *** JOB 278803 ON node16 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278808 ON node27 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278809 ON node27 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278805 ON node26 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278801 ON node03 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278804 ON node35 CANCELLED AT 2020-06-11T23:09:22 ***
+slurmstepd: error: *** JOB 278802 ON node47 CANCELLED AT 2020-06-11T23:09:22 ***
