@@ -10,4 +10,4 @@
 export OMP_NUM_THREADS=1
 module purge
 module add anaconda3
-python3 higgs.py
+python3 higgs.py parameters
