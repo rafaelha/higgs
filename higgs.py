@@ -21,6 +21,7 @@ task_count = int(os.environ.get('SLURM_ARRAY_TASK_COUNT', default=1))
 
 if task_ID != -1:
     exec("from {} import params".format(sys.argv[1]))
+    params = params[task_ID::task_count]
 else:
     from parameters import params
 
@@ -262,14 +263,13 @@ for p in params:
 
         return ds.reshape((ne,))
 
-
     start = time.time()
 
     # initial conditions - everything is zero since we start in equilibrium
     s0 = np.zeros(ne, dtype=complex)
 
     # the built in integrator solves for the r values numerically:
-    sols = integrate.solve_ivp( sprime, (tmin, tmax), s0, t_eval=t_points, method='RK23')
+    sols = integrate.solve_ivp( sprime, (tmin, tmax), s0, t_eval=t_points)#, method='RK23')
 
     # extracting the solutions from the solver output:
     Y = sols.y.reshape(nb, ne_, len(sols.t)).swapaxes(0,2).swapaxes(1,2)
@@ -369,6 +369,7 @@ for p in params:
             #'gscale': gscale,
             'g': g,
             'U': U,
+            'd_eq': d_eq,
             'nb': nb,
             'A0': A0,
             'tau': tau,
