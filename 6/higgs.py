@@ -19,7 +19,7 @@ code_version = {
 job_ID = int(os.environ.get('SLURM_ARRAY_JOB_ID', default=-1))       # job ID
 task_ID = int(os.environ.get('SLURM_ARRAY_TASK_ID', default=-1)) # task ID
 task_count = int(os.environ.get('SLURM_ARRAY_TASK_COUNT', default=1))
-task_count = 64
+task_count = 32
 
 if task_ID != -1:
     exec("from {} import params".format(sys.argv[1]))
