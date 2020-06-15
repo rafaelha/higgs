@@ -27,39 +27,40 @@ params_ = [
 params = []
 for p in params_:
     for A0_pr in p["A0_pr"]:
-        for Ne in p["Ne"]:
-            for tmin in p["tmin"]:
-                for tmax in p["tmax"]:
-                    for T in p["T"]:
-                        for wd in p["wd"]:
-                            for m in p["m"]:
-                                for ef in p["ef"]:
-                                    for U in p["U"]:
-                                        for tau in p["tau"]:
-                                            for w in p["w"]:
-                                                for tau_pr in p["tau_pr"]:
-                                                    for w_pr in p["w_pr"]:
-                                                        for g in p["g"]:
-                                                            for t_delay in p["t_delay"]:
-                                                                params.append({
-                                                                    "Ne": Ne,
-                                                                    "tmin": tmin,
-                                                                    "tmax": tmax,
-                                                                    "Nt": p["Nt"],
-                                                                    "T": T,
-                                                                    "wd": wd,
-                                                                    "s": p["s"],
-                                                                    "m": m,
-                                                                    "ef": ef,
-                                                                    "g": g,
-                                                                    "U": U,
-                                                                    "A0": p["A0"],
-                                                                    "tau": tau,
-                                                                    "w":  w,
-                                                                    "A0_pr": A0_pr,
-                                                                    "tau_pr": tau_pr,
-                                                                    "w_pr": w_pr,
-                                                                    "t_delay": t_delay
-                                                                })
+        for A0 in p["A0"]:
+                for Ne in p["Ne"]:
+                    for tmin in p["tmin"]:
+                        for tmax in p["tmax"]:
+                            for T in p["T"]:
+                                for wd in p["wd"]:
+                                    for m in p["m"]:
+                                        for ef in p["ef"]:
+                                            for U in p["U"]:
+                                                for tau in p["tau"]:
+                                                    for w in p["w"]:
+                                                        for tau_pr in p["tau_pr"]:
+                                                            for w_pr in p["w_pr"]:
+                                                                for g in p["g"]:
+                                                                    for t_delay in p["t_delay"]:
+                                                                        params.append({
+                                                                            "Ne": Ne,
+                                                                            "tmin": tmin,
+                                                                            "tmax": tmax,
+                                                                            "Nt": p["Nt"],
+                                                                            "T": T,
+                                                                            "wd": wd,
+                                                                            "s": p["s"],
+                                                                            "m": m,
+                                                                            "ef": ef,
+                                                                            "g": g,
+                                                                            "U": U,
+                                                                            "A0": A0,
+                                                                            "tau": tau,
+                                                                            "w":  w,
+                                                                            "A0_pr": A0_pr,
+                                                                            "tau_pr": tau_pr,
+                                                                            "w_pr": w_pr,
+                                                                            "t_delay": t_delay
+                                                                        })
 
 print('parameters generated')
