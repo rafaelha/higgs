@@ -10,6 +10,7 @@ pi2 = np.pi*2
 folder = '8_single_hr'
 # folder = '8_single_hr_no_pump'
 folder = '7_pp_long_hr'
+folder = '9_Ne'
 files = glob.glob(f'{folder}/*.pickle')
 
 def nmax(x):
@@ -145,6 +146,27 @@ def plotHiggs(r, t0_by_tau = 2.5):
     plt.xlim((0,4))
     plt.xlabel(f'$\omega$')
     plt.tight_layout()
+
+
+def plotHiggsLast(r, t0_by_tau = 2.5):
+    d = r['d_2'].real
+    t = r['t']
+    tau = r['tau']
+    e = r['efield']
+    w = r['w']
+    d_eq = r['d_eq'][:,0,0]
+    g = r['g']
+
+    t_ = t[t>t0_by_tau*tau]
+    d_ = d[t>t0_by_tau*tau]
+    d_ -= np.mean(d_, axis=0)
+    plt.figure()
+    plt.subplot(121)
+    plt.plot(t/pi2,d)
+    plt.axvline(t0_by_tau, c='gray', lw=2,ls='--')
+    plt.xlabel(f'$t/2 \pi$')
+    plt.ylabel(f'Re$\delta \Delta$')
+    title(r)
 
 def plotJ(r, order=1, t0_by_tau = 2.5):
     if order == 1:
@@ -284,9 +306,43 @@ def plotE(r):
 
 delays = np.sort(values('t_delay'))
 w_pr = values('w_pr')
+Nes = np.sort(values('Ne'))
+
+r0 = sel(T=0.06,Ne=Nes[-1])[0]
+d2_ref = r0['d_2'].real
+t = r0['t']
+
+xNe = []
+yTc = []
+yD = []
 
 save = True
-# save = False
+save = False
+for Ne in Nes[:-1]:
+    for r in sel(Ne=Ne,T=0.06):
+        # plt.figure()
+        diff = (r['d_2'].real - d2_ref)[:,0]
+        # plt.plot(t,diff)
+        ttt = t[diff>0.000001]
+        if len(ttt) == 0:
+            tc = max(t)
+        else:
+            tc = ttt[0]
+        # plt.axvline(tc,c='red')
+        # plt.ylim(0,0.0001)
+        xNe.append(r['Ne'])
+        yTc.append(tc)
+        yD.append(r['duration'])
+
+plt.figure()
+plt.plot(xNe,yTc,'.')
+plt.xlabel('Ne')
+plt.ylabel('$t_c$ Time after which solution is not converged')
+# plt.figure()
+# plt.plot(xNe,yD)
+
+
+"""
 for r in sel(t_delay=delays[3],w_pr=w_pr[1],A0_pr=0.005, A0=0):
     # plotE(r)
     if save: plt.savefig(next('efield'))
@@ -300,3 +356,4 @@ for r in sel(t_delay=delays[3],w_pr=w_pr[1],A0_pr=0.005, A0=0):
 
     plotJ(r, order=3)
     if save: plt.savefig(next('j3'))
+"""

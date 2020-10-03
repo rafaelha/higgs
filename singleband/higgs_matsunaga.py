@@ -4,6 +4,8 @@ from numpy import sqrt
 # mpl.use('Agg')
 import matplotlib.pyplot as plt
 from scipy import integrate
+from scipy import interpolate
+from scipy.fftpack import fft, fftfreq, fftshift
 import scipy
 import time
 import pickle
@@ -12,9 +14,10 @@ import os
 import gc
 
 code_version = {
-    "1.0": "first version"
+    "1.0": "first version",
+    "1.1": "pulse shape modified, now parameter te, te_pr"
 }
-
+#%%
 # ncpus = int(os.environ.get('SLURM_CPUS_PER_TASK', default=1))       # number of CPUs
 job_ID = int(os.environ.get('SLURM_ARRAY_JOB_ID', default=-1))       # job ID
 task_ID = int(os.environ.get('SLURM_ARRAY_TASK_ID', default=-1)) # task ID
@@ -30,27 +33,28 @@ else:
 
     params = [
         {
-            "Ne": 100,
-            "tmin": -4*(2*np.pi),
-            "tmax": 10*(2*np.pi),
-            "Nt": 500,
-            "T": 0.02,
+            "Ne": 850,
+            "tmin": -2*(2*np.pi),
+            "tmax": 30*(2*np.pi),
+            "Nt": 3000,
+            "T": 0.56, #0.22
             "wd":  10,
-            "s": np.array([1,-1]),
-            "m": np.array([1.0,1.2]),
-            "ef": np.array([500,300]),
-            "g": np.array([10, 10]),
-            "U": np.array([[0.08,0.01], [0.01,0.18]]),
-            "A0": 0.05,
-            "tau": 2*np.pi,
-            "w":  1,
-            "A0_pr": 0,
-            "tau_pr": 0.1,
-            "w_pr": 0,
-            "t_delay": 0
+            "s": np.array([1]),
+            "m": np.array([1.0]),
+            "ef": np.array([500]),
+            "g": np.array([10]),
+            "U": np.array([[0.2082]]),
+            "A0": -1,
+            "tau": 0.81,
+            "w":  0.36,
+            "te": -4.21,
+            "A0_pr": -0.1,
+            "tau_pr": 0.81,
+            "w_pr": 0.36,
+            "t_delay": 9,
+            "te_pr": -4.21
         }
     ]
-
 
 
 for p in params:
@@ -76,6 +80,8 @@ for p in params:
     A0 = p["A0"]
     tau = p["tau"]
     w = p["w"]
+    te = p["te"]
+    te_pr = p["te_pr"]
 
     if nb == 2:
         pre_d0  = np.array([0.47921433, 1.06231377])
@@ -108,6 +114,7 @@ for p in params:
     def d0_integrand(x, d):
         # This is an auxiliary function used in find_d0 to calculate an integral
         return 0.5*1/np.sqrt(x**2+d**2)*np.tanh(B/2*np.sqrt(x**2+d**2))
+
     def find_d0(UN0):
         # this function finds the initial gap(s) given U*N(0). Works in the single or multiband case
         if nb == 2:
@@ -117,7 +124,7 @@ for p in params:
                 integral[j] = integrate.quad(d0_integrand, -wd, wd, (d[j],))[0]
             d_new = np.sum(UN0*d*integral, axis=1)
 
-            while (np.linalg.norm(d - d_new) > 1e-9):
+            while (np.linalg.norm(d - d_new) > 1e-15):
                 d = d_new
                 integral = np.zeros(2)
                 for j in [0, 1]:
@@ -128,11 +135,12 @@ for p in params:
             UN0 = U[0]*N0
             d = 1
             d_new = UN0*d*integrate.quad(d0_integrand, -wd, wd, (d,))[0]
-            while (np.linalg.norm(d - d_new) > 1e-9):
+            while (np.linalg.norm(d - d_new) > 1e-12):
                 d = d_new
                 d_new = UN0*d*integrate.quad(d0_integrand, -wd, wd, (d,))[0]
             return d_new
     d_eq0 = find_d0(UN0)
+    print('gap=',d_eq0)
 
     # if d0 is set, calculate U like this:
     #U = find_U(pre_d0, 0.05/0.08, integrate.simps(0.5*1/np.sqrt(ep**2+d0.reshape(2,1)**2)*np.tanh(B/2*np.sqrt(ep**2+d0.reshape(2,1)**2)),ep))
@@ -224,12 +232,37 @@ for p in params:
         f = (x2 - x1)/(x2 - x0)
         der = (1-f)*(y2 - y1)/(x2 - x1) + f*(y1 - y0)/(x1 - x0)
         return np.concatenate([[der[0]],der,[der[-1]]])
+    def running_mean(x, N):
+        cumsum = np.cumsum(np.insert(x, 0, 0))
+        return (cumsum[N:] - cumsum[:-N]) / float(N)
+
+    # ps = np.loadtxt('..\\material_parameters_Matsunaga\\pulse_shape.csv', delimiter=',')
+    # rm = 20
+    # t_pulse = running_mean(ps[:,0],rm)
+
+    # b = 0.3
+    # smooth = (np.tanh((t_pulse-1.5)/b)+1)/2
+    # smooth2 = (-np.tanh((t_pulse-7.5)/b)+1)/2
+
+    # e_pulse = running_mean(ps[:,1],rm)*smooth*smooth2
+    # e_pulse /= np.max(np.abs(e_pulse))
+
+    # # 1 time unit = 0.438856 ps
+    # t_pulse /= 0.438856
+
+    # a_pulse = -scipy.integrate.cumtrapz(e_pulse,t_pulse, initial=0)
+    # shift = 0.9
+    # A_pump = scipy.interpolate.interp1d(np.concatenate([[-1e4],t_pulse-shift*2*np.pi,[1e4]]),A0*np.concatenate([[0],a_pulse,[a_pulse[-1]]]),kind='linear')
+    # A_probe = scipy.interpolate.interp1d(np.concatenate([[-1e4],t_pulse-shift*2*np.pi+t_delay,[1e4]]),A0_pr*np.concatenate([[0],a_pulse,[a_pulse[-1]]]),kind='linear')
+
     def A(t):
+        # return A_pump(t) + A_probe(t)
         """ Returns the vector potential at time t """
-        return A0*np.exp(-t**2/(2*tau**2))*np.cos(w*t) \
-            +  A0_pr*np.exp(-(t-t_delay)**2/(2*tau_pr**2))*np.cos(w_pr*(t-t_delay))
+        return A0*np.exp(-(t-te)**2/(2*tau**2))*np.cos(w*t) \
+            +  A0_pr*np.exp(-(t-te-t_delay)**2/(2*tau_pr**2))*np.cos(w_pr*(t-t_delay))
 
 
+#%%
     def sprime(t, s):
         """ function given to the integrator used to calculate the time evolution of the state vector in the second order calculation """
         ds = np.copy(s).reshape(nb, ne_)
@@ -304,7 +337,7 @@ for p in params:
 
     for ts in tt:
         if task_ID==-1:
-            print(' |', np.round((ts[0]-tmin)/(tmax-tmin)*100), end="\r")
+            print(np.round((ts[0]-tmin)/(tmax-tmin)*100))
         # the built in integrator solves for the r values numerically:
         sols = integrate.solve_ivp( sprime, (t0, ts[-1]), s0, t_eval=ts)
         t0 = ts[-1]
@@ -377,44 +410,130 @@ for p in params:
     print(f' finished in {duration}s')
     # pr.print_stats(sort='time')
 
+#%% plot the data
 
-    # plot
+    def pfft(t,data):
+        N_t = len(t)
+        y= data
+        yf = fft(y)
+        xf = fftfreq(N_t, t[1]-t[0])
+        xf = fftshift(xf)
+        yplot = fftshift(yf)
+        return np.array([xf*2*np.pi, 1.0/N_t*yplot])
+
+    def rfft(t,f, inverse=False):
+        T = max(t) - min(t)
+        Nt = len(t)
+        dt = T/Nt
+        xw = np.arange(Nt) * 2 * np.pi / T
+
+        if inverse:
+            xw = np.concatenate([xw[:Nt//2]+2*np.pi/dt, xw[Nt//2:]])
+            idx = np.argsort(xw)
+            xw = xw[idx]
+            f = f[idx]
+            fw = scipy.ifft(f, axis=0)/np.sqrt(Nt)*Nt
+        else:
+            fw = scipy.fft(f, axis=0)/np.sqrt(Nt)
+            xw = np.concatenate([xw[:Nt//2], xw[Nt//2:]-2*np.pi/dt])
+            idx = np.argsort(xw)
+            xw = xw[idx]
+            fw = fw[idx]
+        return xw, fw
+
+    def nm(x):
+        return x / np.max(np.abs(x))
+
     if job_ID == -1:
+
+        plt.figure('A')
+        plt.clf()
+        plt.subplot(131)
+        plt.plot(tp,A(t))
+        plt.plot(tp,efield)
+        # plt.xlim((-1,1))
+        plt.ylabel(f'$A(t)$')
+        plt.xlabel(f'$t/2 \pi$')
+
+        plt.subplot(132)
+        tw, aw = rfft(t,A(t))
+        # plt.plot(tw, np.real(nm(aw)))
+        # plt.plot(tw, np.imag(nm(aw)))
+        plt.plot(tw, np.abs(nm(aw)),'-')
+        plt.xlim((0,5*d_eq0[0]))
+        plt.ylabel(f'$A(\omega)$')
+        plt.xlabel(f'$\omega$')
+        plt.axvline(d_eq[0], c='gray', lw=1)
+        plt.xlim((0,5*d_eq[0]))
+        if len(d_eq)>1: plt.axvline(d_eq[1], c='gray', lw=1)
+        plt.tight_layout()
+
+        plt.subplot(133)
+        tw, aw2 = rfft(t,A(t)**2)
+        # plt.plot(tw, np.real(nm(aw2)))
+        # plt.plot(tw, np.imag(nm(aw2)))
+        plt.plot(tw, np.abs(nm(aw2)),'-')
+        plt.xlim((0,5*d_eq0[0]))
+        plt.ylabel(f'$A^2(\omega)$')
+        plt.xlabel(f'$\omega$')
+        plt.axvline(2*d_eq[0], c='gray', lw=1)
+        plt.xlim((0,5*d_eq[0]))
+        if len(d_eq)>1: plt.axvline(2*d_eq[1], c='gray', lw=1)
+        plt.tight_layout()
+
         plt.figure('d_1')
         plt.clf()
         plt.subplot(121)
         plt.plot(tp,d_2.real)
         plt.title(f'Re$[\Delta]$')
         plt.subplot(122)
-        plt.plot(tp, d_2.imag)
-        plt.title(f'Im$[\Delta]$')
+        sel = np.abs(tp-7)<4
+        dsel = d_2[sel,0].real
+        dsel -= np.mean(dsel)
+        tw, dw = rfft(t[sel],dsel)
+        plt.plot(tw, nm(np.abs(dw)), '.-')
+        tw, dw = rfft(t[sel],dsel)
+        plt.plot(tw, nm(np.abs(dw)), '.-')
+        plt.xlim((0,5*d_eq0[0]))
+        # plt.plot(tp, d_2.imag)
+        # plt.title(f'Im$[\Delta]$')
         plt.tight_layout()
 
 
-        plt.figure('j_1')
+        plt.figure('sigma_1')
         plt.clf()
-        plt.subplot(121)
-        plt.plot(tp,jd_1, label=f'$j_D|_1$')
-        plt.plot(tp,jp_1, label=f'$j_P|_1$')
-        plt.legend()
-        plt.subplot(122)
-        plt.plot(tp,efield/np.max(efield)*np.max(j_1), '--', label=f'$E$')
-        plt.plot(tp,j_1, 'k', label=f'$j|_1$')
-        plt.legend()
-        plt.tight_layout()
 
+        #calculate conductivity
+        def cond(j_1):
+            tw, jw = rfft(t,j_1)
+            tw, ew = rfft(t,efield)
+            s=jw/ew
+            ww, Aw = rfft(t,A(t))
+            s2 = jw/(1j*ww*Aw)
+            s[tw==0] = 0 + 1j*np.inf
+            s2[tw==0] = 0 + 1j*np.inf
+            sr = np.abs(s.real)
+            si = np.abs(s.imag)
+            sr2 = np.abs(s2.real)
+            si2 = np.abs(s2.imag)
+            wsel = np.abs(tw-2)<0.3
+            nm1 = np.max(sr[wsel])
+            nm2 = np.max(si[wsel])
+            plt.plot(tw, sr/nm1, label='Re $j/E$')
+            plt.plot(tw, si/nm2, label='Im $j/E$')
+            plt.plot(tw, sr2/nm1, '.', c='blue', label='Re $j/i\omega A$')
+            plt.plot(tw, si2/nm2, '.', c='orange', label='Im $j/i \omega A$')
+            plt.xlim((0,4*d_eq0[0]))
+            plt.ylim(0,10)
+            plt.legend()
 
-        plt.figure('j_3')
-        plt.clf()
-        plt.subplot(121)
-        plt.plot(tp,jd_3, label=f'$j_D|_3$')
-        plt.plot(tp,jp_3, label=f'$j_P|_3$')
-        plt.legend()
-        plt.subplot(122)
-        plt.plot(tp,efield/np.max(efield)*np.max(j_3), '--', label=f'$E$')
-        plt.plot(tp,j_3, 'k', label=f'$j|_3$')
-        plt.legend()
-        plt.tight_layout()
+        plt.subplot(131)
+        cond(j_1)
+        plt.subplot(132)
+        cond(j_3)
+        plt.subplot(133)
+        cond(j_1+0.1*j_3)
+
 
 
     # save as dictionary using pickle
@@ -432,9 +551,11 @@ for p in params:
             'A0': A0,
             'tau': tau,
             'w': w,
+            'te': te,
             'A0_pr': A0_pr,
             'tau_pr': tau_pr,
             'w_pr': w_pr,
+            'te_pr': te_pr,
             't_delay': t_delay,
             't': t,
             'jp_1': jp_1,
@@ -456,4 +577,3 @@ for p in params:
     f1 = open(f'{job_ID}_{task_ID}.pickle', 'ab')
     pickle.dump(res, f1)
     f1.close()
-
