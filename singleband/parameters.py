@@ -2,7 +2,7 @@ import numpy as np
 
 params_ = [
     {
-        "Ne": [50],
+        "Ne": [500],
         "tmin": [-2*(2*np.pi)],
         "tmax": [12*(2*np.pi)],
         "Nt": 2000,
